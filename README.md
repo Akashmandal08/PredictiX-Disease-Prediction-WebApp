@@ -56,6 +56,7 @@ License
 Contact
 
 📖 About The Project
+
 The early detection of chronic diseases can be life-saving. PredictiX was created to make preliminary health assessment more accessible to everyone. By consolidating multiple machine learning models into a single, intuitive platform, this project aims to:
 
 Promote Health Awareness: Provide users with a simple tool to understand potential health risks based on their data.
@@ -67,6 +68,7 @@ Encourage Proactive Care: Motivate users who receive a high-risk prediction to c
 The application features a clean, modern interface built with Streamlit, ensuring a seamless user experience across different devices.
 
 ✨ Key Features
+
 Four Prediction Modules: Separate, dedicated pages for Diabetes, Heart Disease, Parkinson's, and Breast Cancer prediction.
 
 Multi-Model Approach: Each disease prediction is supported by multiple machine learning models (e.g., Logistic Regression, SVM, Random Forest, XGBoost) to provide a more robust assessment.
@@ -222,7 +224,6 @@ Project Link: https://github.com/Akashmandal08/PredictiX
 * Models Used
 * Model Evaluation
 * Conclusion
-* Deployment
 * Contributing
 
 # Overview
