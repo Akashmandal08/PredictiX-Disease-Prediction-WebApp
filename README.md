@@ -5,6 +5,8 @@
 **Email**: akashmandal.9490@gmail.com  
 **Repository**: [PredictiX-Disease-Prediction-WebApp](https://github.com/Akashmandal08/PredictiX-Disease-Prediction-WebApp.git)
 
+---
+
 PredictiX is an intelligent, user-friendly web application that leverages the power of machine learning to provide preliminary predictions for four major chronic diseases: Diabetes, Heart Disease, Parkinson's Disease, and Breast Cancer. This tool is designed to serve as a health awareness platform, empowering users to assess their risk based on relevant medical parameters and encouraging them to seek timely professional medical advice.
 
 The application features a stunning, modern user interface with a "Cyberpunk Neon" theme, glassmorphism effects, and interactive visualizations, all built with Streamlit.
