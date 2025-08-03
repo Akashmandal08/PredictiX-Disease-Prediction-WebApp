@@ -5,6 +5,8 @@ import json
 import pandas as pd
 import os
 import base64
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -14,11 +16,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- HELPER FUNCTION TO LOAD FILES ---
-# This caches the files to prevent reloading on every interaction, improving performance.
+# --- HELPER FUNCTIONS TO LOAD FILES ---
 @st.cache_data
 def load_file(file_path):
-    """Loads a file safely from the specified path."""
+    """Loads a pickle or json file safely."""
     if not os.path.exists(file_path):
         st.error(f"Error: The file was not found at {file_path}")
         st.stop()
@@ -33,8 +34,19 @@ def load_file(file_path):
         st.error(f"Error loading {file_path}: {e}")
         st.stop()
 
+@st.cache_data
+def load_dataset(file_path):
+    """Loads a CSV dataset safely."""
+    if not os.path.exists(file_path):
+        st.error(f"Error: The dataset was not found at {file_path}")
+        st.stop()
+    try:
+        return pd.read_csv(file_path)
+    except Exception as e:
+        st.error(f"Error loading dataset {file_path}: {e}")
+        st.stop()
+
 # --- LOAD ALL MODELS AND PREPROCESSING FILES ---
-# Grouping file loading for better organization
 try:
     # Diabetes Prediction Files
     diabetes_files = {
@@ -47,8 +59,7 @@ try:
         "model_lr": load_file("Models/ML-Project-2-Diabetes_Prediction_Models/diabetes_disease_trained_lr_model.sav"),
         "model_rfc": load_file("Models/ML-Project-2-Diabetes_Prediction_Models/diabetes_disease_trained_rfc_model.sav"),
     }
-
-    # Heart Disease Prediction Files
+    # Heart Disease, Parkinson's, and Breast Cancer files loaded similarly...
     heart_disease_files = {
         "all_columns": load_file("Preprocessing Files/ML-Project-9-Heart_Disease_Prediction_Pre_Processing_Files/columns.pkl"),
         "cat_columns": load_file("Preprocessing Files/ML-Project-9-Heart_Disease_Prediction_Pre_Processing_Files/cat_columns.pkl"),
@@ -63,8 +74,6 @@ try:
         "model_rfc": load_file("Models/ML-Project-9-Heart_Disease_Prediction_Models/heart_disease_trained_rfc_model.sav"),
         "model_lr": load_file("Models/ML-Project-9-Heart_Disease_Prediction_Models/heart_disease_trained_lr_model.sav"),
     }
-
-    # Parkinson's Disease Prediction Files
     parkinson_files = {
         "all_features": load_file("Preprocessing Files/ML-Project-14-Parkinson's_Disease_Prediction_Pre_Processing_Files/columns.pkl"),
         "scaler": load_file("Preprocessing Files/ML-Project-14-Parkinson's_Disease_Prediction_Pre_Processing_Files/scaler.pkl"),
@@ -75,8 +84,6 @@ try:
         "model_xgb": load_file("Models/ML-Project-14-Parkinson's_Disease_Prediction_Models/parkinsons_disease_trained_xgb_model.sav"),
         "model_rfc": load_file("Models/ML-Project-14-Parkinson's_Disease_Prediction_Models/parkinsons_disease_trained_rfc_model.sav"),
     }
-
-    # Breast Cancer Prediction Files
     breast_cancer_files = {
         "all_features": load_file("Preprocessing Files/ML-Project-19-Breast_Cancer_Classification_Pre_Processing_Files/columns.pkl"),
         "scaler": load_file("Preprocessing Files/ML-Project-19-Breast_Cancer_Classification_Pre_Processing_Files/scaler.pkl"),
@@ -87,168 +94,145 @@ try:
         "model_xgb": load_file("Models/ML-Project-19-Breast_Cancer_Classification_Models/parkinsons_disease_trained_xgb_model.sav"),
         "model_knn": load_file("Models/ML-Project-19-Breast_Cancer_Classification_Models/parkinsons_disease_trained_knn_model.sav"),
     }
-
 except Exception as e:
     st.error("An error occurred during file loading. Please ensure all model and data files are in their correct directories.")
     st.exception(e)
     st.stop()
-
 
 # --- UI & STYLING ---
 def load_css():
     """Injects custom CSS for a modern, eye-catching UI."""
     st.markdown("""
         <style>
-            /* Import Google Font */
             @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
-            /* Overall App Styling */
-            body {
-                font-family: 'Poppins', sans-serif;
-            }
-            .stApp {
-                background-color: #1a1a2e; /* Dark blue background */
-            }
             
-            /* Sidebar Styling */
-            .css-1d391kg {
-                background-color: #16213e; /* Slightly lighter blue for sidebar */
-                border-right: 2px solid #0f3460;
+            :root {
+                --primary-color: #00f2ea; /* Neon Cyan */
+                --secondary-color: #ff00ff; /* Neon Magenta */
+                --background-color: #10102a; /* Deep Purple */
+                --sidebar-bg-color: #1a1a3d;
+                --card-bg-color: rgba(26, 26, 61, 0.7);
+                --text-color: #ffffff;
+                --subtle-text-color: #a0a0c0;
+                --border-color: #3d3d6b;
             }
 
-            /* Logo in Sidebar */
+            body { font-family: 'Poppins', sans-serif; }
+            .stApp { background-color: var(--background-color); }
+            
+            /* Sidebar */
+            [data-testid="stSidebar"] {
+                background-color: var(--sidebar-bg-color);
+                border-right: 2px solid var(--border-color);
+            }
+            .sidebar-title {
+                text-align: center;
+                font-size: 2.2rem;
+                font-weight: 700;
+                padding: 1.5rem 0 0.5rem 0;
+                color: var(--primary-color);
+                text-shadow: 0 0 10px var(--primary-color);
+            }
             .sidebar-logo {
                 text-align: center;
-                padding: 2rem 1rem 1rem 1rem;
+                padding-bottom: 1rem;
             }
             .sidebar-logo img {
                 width: 120px;
                 border-radius: 50%;
-                box-shadow: 0px 10px 30px rgba(0, 212, 255, 0.3);
-                border: 3px solid #e94560;
+                box-shadow: 0 0 25px var(--primary-color);
+                border: 3px solid var(--primary-color);
             }
-
-            /* Option Menu Styling */
-            div[data-testid="stSidebarNav"] .st-emotion-cache-1cypcdb {
-                padding: 10px 0;
-            }
-            div[data-testid="stSidebarNav"] .st-emotion-cache-1cypcdb a {
+            
+            /* Option Menu */
+            div[data-testid="stSidebarNav"] a {
                 font-size: 1.1rem;
                 font-weight: 600;
-                color: #c9c9c9;
+                color: var(--subtle-text-color);
                 border-radius: 10px;
                 margin: 5px 15px;
-                transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+                transition: all 0.3s ease;
             }
-            div[data-testid="stSidebarNav"] .st-emotion-cache-1cypcdb a:hover {
-                background-color: rgba(233, 69, 96, 0.2);
-                color: #e94560;
+            div[data-testid="stSidebarNav"] a:hover {
+                background-color: rgba(0, 242, 234, 0.1);
+                color: var(--primary-color);
             }
-            div[data-testid="stSidebarNav"] .st-emotion-cache-1cypcdb a[aria-current="page"] {
-                background-color: #e94560;
+            div[data-testid="stSidebarNav"] a[aria-current="page"] {
+                background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
                 color: white;
             }
 
-            /* Main Content Styling */
-            .block-container {
-                padding-top: 2rem;
-            }
-            h1, h2, h3, h4, h5, h6 {
-                font-weight: 700;
-                color: #ffffff;
-            }
+            /* Main Content Title */
             h1 {
-                color: #e94560;
+                font-weight: 700;
                 text-align: center;
-                margin-bottom: 1rem;
+                margin-bottom: 1.5rem;
+                padding-top: 1rem;
+                color: var(--primary-color);
+                text-shadow: 0 0 15px rgba(0, 242, 234, 0.5);
             }
             
-            /* Styled Containers (Cards) */
+            /* Glassmorphism Cards */
             .st-emotion-cache-1r4qj8v {
-                background: linear-gradient(145deg, #1a1a2e, #16213e);
-                border: 1px solid #0f3460;
+                background: var(--card-bg-color);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 15px;
                 padding: 2rem;
                 box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-                backdrop-filter: blur(4px);
-                -webkit-backdrop-filter: blur(4px);
             }
 
-            /* Input Widgets Styling */
+            /* Inputs and Selectors */
             .stNumberInput > div > div > input, .stSelectbox > div > div {
                 border-radius: 8px;
-                border: 2px solid #0f3460;
-                background-color: #16213e;
-                color: white;
-                transition: border-color 0.3s, box-shadow 0.3s;
+                border: 2px solid var(--border-color);
+                background-color: var(--sidebar-bg-color);
+                color: var(--text-color);
+                transition: all 0.3s;
             }
             .stNumberInput > div > div > input:focus, .stSelectbox > div > div:focus-within {
-                border-color: #e94560;
-                box-shadow: 0 0 8px rgba(233, 69, 96, 0.5);
+                border-color: var(--primary-color);
+                box-shadow: 0 0 10px rgba(0, 242, 234, 0.5);
             }
             
-            /* Button Styling */
+            /* Animated Gradient Button */
             .stButton > button {
-                border: 2px solid #e94560;
-                background: transparent;
-                color: #e94560;
+                border: none;
+                background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+                background-size: 200% 100%;
+                color: white;
                 border-radius: 10px;
-                padding: 10px 20px;
+                padding: 12px 20px;
                 font-size: 1.2rem;
                 font-weight: 700;
                 width: 100%;
-                transition: all 0.3s ease-in-out;
+                transition: all 0.4s ease-in-out;
             }
             .stButton > button:hover {
-                background-color: #e94560;
-                color: white;
-                box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+                background-position: 100% 0;
+                box-shadow: 0 0 25px rgba(0, 242, 234, 0.5);
                 transform: translateY(-3px);
             }
-             .stButton > button:active {
-                transform: translateY(0);
-            }
             
-            /* Prediction Result Styling */
+            /* Prediction Result Box */
             .result-box {
-                border-radius: 15px;
-                padding: 25px;
-                margin-top: 25px;
-                text-align: center;
-                font-size: 1.8rem;
-                font-weight: 700;
-                animation: fadeIn 1s ease-in-out;
-                border: 3px solid;
+                border-radius: 15px; padding: 25px; margin-top: 25px; text-align: center;
+                font-size: 1.8rem; font-weight: 700; animation: fadeIn 1s; border: 3px solid;
             }
             .result-positive {
-                border-color: #ff4b4b;
-                background: linear-gradient(45deg, rgba(255, 75, 75, 0.1), rgba(255, 75, 75, 0.2));
-                color: #ff4b4b;
-                text-shadow: 0 0 15px rgba(255, 75, 75, 0.7);
+                border-color: #ff4b4b; background: linear-gradient(45deg, rgba(255, 75, 75, 0.1), rgba(255, 75, 75, 0.2));
+                color: #ff4b4b; text-shadow: 0 0 15px rgba(255, 75, 75, 0.7);
             }
             .result-negative {
-                border-color: #3dd56d;
-                background: linear-gradient(45deg, rgba(61, 213, 109, 0.1), rgba(61, 213, 109, 0.2));
-                color: #3dd56d;
-                text-shadow: 0 0 15px rgba(61, 213, 109, 0.7);
+                border-color: #3dd56d; background: linear-gradient(45deg, rgba(61, 213, 109, 0.1), rgba(61, 213, 109, 0.2));
+                color: #3dd56d; text-shadow: 0 0 15px rgba(61, 213, 109, 0.7);
             }
-            
-            @keyframes fadeIn {
-                from { opacity: 0; transform: scale(0.8); }
-                to { opacity: 1; transform: scale(1); }
-            }
-            
-            /* Expander Styling */
-            .st-emotion-cache-p5msec {
-                border: 1px solid #0f3460;
-                border-radius: 10px;
-                background-color: #16213e;
-            }
+            @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
         </style>
     """, unsafe_allow_html=True)
 
-
-# --- PREDICTION FUNCTIONS ---
+# --- PREDICTION FUNCTIONS (Unchanged) ---
 def diabetes_prediction(input_data):
     df = pd.DataFrame([input_data], columns=diabetes_files["all_features"])
     df[diabetes_files["all_features"]] = diabetes_files["scaler"].transform(df[diabetes_files["all_features"]])
@@ -300,38 +284,39 @@ def display_prediction(prediction_result, positive_text, negative_text):
     else:
         st.markdown(f'<div class="result-box result-negative">{negative_text}</div>', unsafe_allow_html=True)
 
-
 # --- MAIN APPLICATION LOGIC ---
 def main():
     load_css()
 
     with st.sidebar:
-        # --- LOGO ---
         try:
             with open("logo.png", "rb") as f:
                 data = base64.b64encode(f.read()).decode("utf-8")
             st.markdown(
-                f'<div class="sidebar-logo"><img src="data:image/png;base64,{data}" alt="Logo"></div>',
+                f"""
+                <div class="sidebar-title">PredictiX</div>
+                <div class="sidebar-logo">
+                    <img src="data:image/png;base64,{data}" alt="Logo">
+                </div>
+                """,
                 unsafe_allow_html=True,
             )
         except FileNotFoundError:
             st.markdown(
-                '<div class="sidebar-logo" style="color: #e94560; font-weight: 700;">PredictiX</div>',
+                '<div class="sidebar-title">PredictiX</div>',
                 unsafe_allow_html=True,
             )
         
-        # --- NAVIGATION MENU ---
         selected = option_menu(
             menu_title=None,
-            options=['Diabetes', 'Heart Disease', "Parkinson's", 'Breast Cancer'],
-            icons=['droplet-fill', 'heart-pulse-fill', 'person-arms-up', 'gender-female'],
+            options=['Diabetes', 'Heart Disease', "Parkinson's", 'Breast Cancer', 'Data Visualization'],
+            icons=['droplet-fill', 'heart-pulse-fill', 'person-arms-up', 'gender-female', 'bar-chart-line-fill'],
             default_index=0,
         )
 
-    # --- DIABETES PREDICTION PAGE ---
+    # --- Prediction Pages ---
     if selected == 'Diabetes':
-        st.title("🩸 Diabetes Prediction")
-        
+        st.markdown("<h1>🩸 Diabetes Prediction</h1>", unsafe_allow_html=True)
         with st.container():
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -350,15 +335,12 @@ def main():
             input_data = [Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age]
             predictions = diabetes_prediction(input_data)
             display_prediction(predictions["Random Forest Classifier"], "Positive: The person is Diabetic", "Negative: The person is Not Diabetic")
-
             with st.expander("View Advanced Model Predictions"):
                 for model, result in predictions.items():
                     st.write(f"**{model}:** {'Diabetic' if result == 1 else 'Not Diabetic'}")
-
-    # --- HEART DISEASE PREDICTION PAGE ---
+    
     if selected == 'Heart Disease':
-        st.title("❤️ Heart Disease Prediction")
-        
+        st.markdown("<h1>❤️ Heart Disease Prediction</h1>", unsafe_allow_html=True)
         with st.container():
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -382,15 +364,12 @@ def main():
             input_data = [age, sex, chest_pain, resting_bp, serum_cholestoral, fasting_blood_sugar, resting_ecg, max_heart_achieved, exercise_induced_angina, oldpeak, slope_of_peak_exercise, number_of_major_vessels, thal]
             predictions = heart_disease_prediction(input_data)
             display_prediction(predictions["XG Boost Classifier"], "Positive: This person has Heart Disease", "Negative: This person does Not have Heart Disease")
-            
             with st.expander("View Advanced Model Predictions"):
                 for model, result in predictions.items():
                     st.write(f"**{model}:** {'Heart Disease Positive' if result == 1 else 'Heart Disease Negative'}")
 
-    # --- PARKINSON'S DISEASE PREDICTION PAGE ---
     if selected == "Parkinson's":
-        st.title("🧠 Parkinson's Disease Prediction")
-
+        st.markdown("<h1>🧠 Parkinson's Disease Prediction</h1>", unsafe_allow_html=True)
         with st.container():
             col1, col2, col3, col4 = st.columns(4)
             with col1:
@@ -424,15 +403,12 @@ def main():
             input_data = [Fo, Fhi, Flo, Jitter_per, Jitter_Abs, RAP, PPQ, Jitter_DDP, Shimmer, Shimmer_dB, Shimmer_APQ3, Shimmer_APQ5, APQ, Shimmer_DDA, NHR, HNR, RPDE, DFA, spread1, spread2, D2, PPE]
             predictions = parkinson_disease_prediction(input_data)
             display_prediction(predictions["K Neighbors Classifier"], "Positive: This person has Parkinson's Disease", "Negative: This person does Not have Parkinson's Disease")
-
             with st.expander("View Advanced Model Predictions"):
                 for model, result in predictions.items():
                     st.write(f"**{model}:** {'Parkinson\'s Positive' if result == 1 else 'Parkinson\'s Negative'}")
     
-    # --- BREAST CANCER PREDICTION PAGE ---
     if selected == 'Breast Cancer':
-        st.title('🚺 Breast Cancer Prediction')
-        
+        st.markdown('<h1>🚺 Breast Cancer Prediction</h1>', unsafe_allow_html=True)
         with st.container():
             st.subheader("Mean Values")
             col1, col2, col3 = st.columns(3)
@@ -487,10 +463,61 @@ def main():
             input_data = [mean_radius, mean_texture, mean_perimeter, mean_area, mean_smoothness, mean_compactness, mean_concavity, mean_concave_points, mean_symmetry, mean_fractal_dimension, radius_error, texture_error, perimeter_error, area_error, smoothness_error, compactness_error, concavity_error, concave_points_error, symmetry_error, fractal_dimension_error, worst_radius, worst_texture, worst_perimeter, worst_area, worst_smoothness, worst_compactness, worst_concavity, worst_concave_points, worst_symmetry, worst_fractal_dimension]
             predictions = breast_cancer_prediction(input_data)
             display_prediction(predictions["XG Boost Classifier"], "The tumor is Malignant", "The tumor is Benign")
-
             with st.expander("View Advanced Model Predictions"):
                 for model, result in predictions.items():
                     st.write(f"**{model}:** {'Malignant' if result == 1 else 'Benign'}")
+
+    # --- DATA VISUALIZATION PAGE ---
+    if selected == 'Data Visualization':
+        st.markdown("<h1>📊 Data Visualization Dashboard</h1>", unsafe_allow_html=True)
+        
+        dataset_options = {
+            "Diabetes": ("Datasets/Project 2 Diabetes Data.csv", "Outcome"),
+            "Heart Disease": ("Datasets/Project 9 Heart Disease Data.csv", "target"),
+            "Parkinson's": ("Datasets/Project 14 Parkinsons Disease Data.csv", "status"),
+            "Breast Cancer": ("Datasets/Project 19 Breast Cancer Data.csv", "diagnosis")
+        }
+        
+        selected_disease = st.selectbox("Select a dataset to visualize", options=list(dataset_options.keys()))
+        
+        if selected_disease:
+            file_path, target_col = dataset_options[selected_disease]
+            df = load_dataset(file_path)
+            st.markdown(f"### Exploring the {selected_disease} Dataset")
+            st.dataframe(df.head())
+            
+            st.markdown("---")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("Feature Distribution")
+                feature_dist = st.selectbox("Select Feature for Distribution", df.columns.drop(target_col))
+                if feature_dist:
+                    fig, ax = plt.subplots()
+                    sns.histplot(data=df, x=feature_dist, hue=target_col, kde=True, ax=ax, palette="viridis")
+                    ax.set_title(f"Distribution of {feature_dist}", color='white')
+                    fig.patch.set_alpha(0.0)
+                    ax.set_facecolor('#1a1a2e')
+                    ax.tick_params(colors='white')
+                    ax.yaxis.label.set_color('white')
+                    ax.xaxis.label.set_color('white')
+                    st.pyplot(fig)
+
+            with col2:
+                st.subheader("Feature Correlation")
+                feature_x = st.selectbox("Select X-Axis Feature", df.columns.drop(target_col), index=0)
+                feature_y = st.selectbox("Select Y-Axis Feature", df.columns.drop(target_col), index=1)
+                if feature_x and feature_y:
+                    fig, ax = plt.subplots()
+                    sns.scatterplot(data=df, x=feature_x, y=feature_y, hue=target_col, ax=ax, palette="magma")
+                    ax.set_title(f"{feature_x} vs. {feature_y}", color='white')
+                    fig.patch.set_alpha(0.0)
+                    ax.set_facecolor('#1a1a2e')
+                    ax.tick_params(colors='white')
+                    ax.yaxis.label.set_color('white')
+                    ax.xaxis.label.set_color('white')
+                    st.pyplot(fig)
 
 if __name__ == '__main__':
     main()
