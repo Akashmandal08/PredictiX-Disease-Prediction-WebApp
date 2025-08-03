@@ -125,7 +125,24 @@ PredictiX/
 
 ## 📷 Screenshots
 
-> Diabetes, Heart Disease, Parkinson’s, Breast Cancer Prediction, and Data Visualization dashboards included.
+
+
+> Diabetes<img width="1920" height="1020" alt="Screenshot 2025-08-03 114333" src="https://github.com/user-attachments/assets/0cf3eb30-9f21-447c-b669-b66cfd5e383c" />
+
+---
+> Heart Disease<img width="1920" height="1020" alt="Screenshot 2025-08-03 114350" src="https://github.com/user-attachments/assets/966c4300-b007-4b86-9c1a-ed1651ff6845" />
+
+---
+>  Parkinson’s<img width="1920" height="1020" alt="Screenshot 2025-08-03 114402" src="https://github.com/user-attachments/assets/a04606b3-84c3-4daa-a546-e012e8a3d9e2" />
+
+---
+>  Breast Cancer Prediction<img width="1920" height="1020" alt="Screenshot 2025-08-03 114413" src="https://github.com/user-attachments/assets/cadbfab9-7675-4cd4-8a82-b504d1aafc8b" />
+
+---
+>  Data Visualization dashboards<img width="1920" height="1020" alt="Screenshot 2025-08-03 114425" src="https://github.com/user-attachments/assets/06b6ac66-5229-4111-b35a-bbff489cfe6c" />
+
+---
+<img width="1920" height="1020" alt="Screenshot 2025-08-03 114436" src="https://github.com/user-attachments/assets/f6cedf9f-dc2c-45a7-8537-0bc96ece99a1" />
 
 ---
 
